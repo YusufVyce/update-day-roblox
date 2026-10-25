@@ -29,7 +29,7 @@ export function authorizeUrl(req) {
   const challenge = createHash('sha256').update(verifier).digest('base64url');
   const q = new URLSearchParams({
     client_id: process.env.ROBLOX_CLIENT_ID, redirect_uri: redirectUri(req), scope: SCOPES.join(' '),
-    response_type: 'code', state, code_challenge: challenge, code_challenge_method: 'S256', prompt: 'consent',
+    response_type: 'code', state, code_challenge: challenge, code_challenge_method: 'S256', prompt: 'select_account consent', // Roblox rejects requests without select_account
   });
   return { url: `${OAUTH}/authorize?${q}`, state, verifier };
 }
