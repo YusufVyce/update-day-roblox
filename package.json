@@ -1,0 +1,12 @@
+{
+  "name": "update-day",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node dev.js",
+    "test": "node test.js"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}
