@@ -62,6 +62,7 @@ function timeline(cfg) {
       h('div', { class: 'track-past', style: `width:${x(now)}` }),
       items.map((i) => h('span', { class: `tdot ${i.kind}${i.at <= now ? ' past' : ''}`, style: `left:${x(i.at)}`, title: `${i.text} · ${fmtZoned(i.at, cfg.timezone)}` })),
       h('span', { class: 'tnow', style: `left:${x(now)}` }, 'now')),
+    h('div', { class: 'legend' }, [['icon', 'Icon'], ['release', 'Release'], ['auto', 'Autopilot'], ['discord', 'Discord'], ['sale', 'Sale'], ['timer', 'Timer']].filter(([k]) => items.some((i) => i.kind === k)).map(([k, l]) => h('span', {}, h('span', { class: `tdot inline ${k}` }), l))),
     h('div', { class: 'track-ends' }, h('small', {}, fmtZoned(from, cfg.timezone)), h('small', {}, fmtZoned(to, cfg.timezone))),
     next.length ? h('ul', { class: 'upnext' }, next.map((i) => h('li', {},
       h('span', { class: `tdot inline ${i.kind}` }),
@@ -90,15 +91,15 @@ export async function renderOverview(root, ctx) {
   const last = samples.at(-1);
   const dayAgo = samples.findLast((s) => last && s[0] <= last[0] - 86400000);
   const d = deltaPlaying(samples);
-  const kpi = (label, value, sub, extra) => h('div', { class: 'kpi' }, h('small', {}, label), h('b', {}, value), sub ? h('span', { class: sub.startsWith('-') ? 'down' : 'up' }, sub) : h('span', { class: 'muted' }, ' '), extra);
+  const kpi = (kind, ic, label, value, sub, extra) => h('div', { class: `kpi ${kind}` }, h('small', {}, h('span', { class: 'kchip' }, icon(ic, 13)), label), h('b', {}, value), sub ? h('span', { class: sub.startsWith('-') ? 'down' : 'up' }, sub) : h('span', { class: 'muted' }, ' '), extra);
   const liked = last && last[4] + last[5] ? (last[4] / (last[4] + last[5])) * 100 : p?.liked;
 
   fill(root,
     h('div', { class: 'kpis' },
-      kpi('Players now', compact(last?.[1] ?? p?.playing), d != null ? `${d >= 0 ? '+' : ''}${d}% vs yesterday` : null, sparkline(samples.slice(-180).map((s) => s[1]))),
-      kpi('Visits', compact(last?.[2] ?? p?.visits), dayAgo ? `+${compact(last[2] - dayAgo[2])} today` : null),
-      kpi('Favorites', compact(last?.[3] ?? p?.favorites), dayAgo ? `+${compact(last[3] - dayAgo[3])} today` : null),
-      kpi('Liked', liked != null ? `${liked.toFixed(1)}%` : '–', null)),
+      kpi('players', 'users', 'Players now', compact(last?.[1] ?? p?.playing), d != null ? `${d >= 0 ? '+' : ''}${d}% vs yesterday` : null, sparkline(samples.slice(-180).map((s) => s[1]))),
+      kpi('visits', 'play', 'Visits', compact(last?.[2] ?? p?.visits), dayAgo ? `+${compact(last[2] - dayAgo[2])} today` : null),
+      kpi('favs', 'star', 'Favorites', compact(last?.[3] ?? p?.favorites), dayAgo ? `+${compact(last[3] - dayAgo[3])} today` : null),
+      kpi('liked', 'thumb', 'Liked', liked != null ? `${liked.toFixed(1)}%` : '–', null)),
     h('div', { class: 'ov-grid' },
       card('Launch timeline', timeline(cfg)),
       card('Activity', cfg.log.length
@@ -134,10 +135,10 @@ export async function renderAnalytics(root, ctx, days = 1) {
       }, l)))),
     card('Players online', playersChart(samples, { release: cfg.countdown.target, tz: cfg.timezone })),
     h('div', { class: 'kpis' },
-      h('div', { class: 'kpi' }, h('small', {}, 'Peak'), h('b', {}, compact(peak[1])), h('span', { class: 'muted' }, peak[0] ? fmt.format(peak[0]) : ' ')),
-      h('div', { class: 'kpi' }, h('small', {}, 'Average'), h('b', {}, compact(avg)), h('span', { class: 'muted' }, ' ')),
-      h('div', { class: 'kpi' }, h('small', {}, 'Visits gained'), h('b', {}, first ? `+${compact(last[2] - first[2])}` : '–'), h('span', { class: 'muted' }, ' ')),
-      h('div', { class: 'kpi' }, h('small', {}, 'Favorites gained'), h('b', {}, first ? `+${compact(last[3] - first[3])}` : '–'), h('span', { class: 'muted' }, ' '))),
+      h('div', { class: 'kpi players' }, h('small', {}, 'Peak'), h('b', {}, compact(peak[1])), h('span', { class: 'muted' }, peak[0] ? fmt.format(peak[0]) : ' ')),
+      h('div', { class: 'kpi players' }, h('small', {}, 'Average'), h('b', {}, compact(avg)), h('span', { class: 'muted' }, ' ')),
+      h('div', { class: 'kpi visits' }, h('small', {}, 'Visits gained'), h('b', {}, first ? `+${compact(last[2] - first[2])}` : '–'), h('span', { class: 'muted' }, ' ')),
+      h('div', { class: 'kpi favs' }, h('small', {}, 'Favorites gained'), h('b', {}, first ? `+${compact(last[3] - first[3])}` : '–'), h('span', { class: 'muted' }, ' '))),
     reportCard(cfg, samples),
     samples.length ? h('details', { class: 'help' }, h('summary', {}, 'Show as table'),
       h('table', { class: 'table' },
